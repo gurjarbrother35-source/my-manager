@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1D5FBF">
+<title>MY MANAGER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--text:#141A29;--muted:#566074;--line:#E2E7F0;--accent:#1D5FBF;--good:#13704A;--bad:#B42318;--warnbg:#FFF4D6;--warn:#6B4A00}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1320;--card:#171E2E;--text:#E8ECF4;--muted:#A8B2C7;--line:#2A3347;--accent:#6FA3F0;--good:#5FD39A;--bad:#FF9A8F;--warnbg:#3A2F12;--warn:#F5D98B}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Devanagari',system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:22px;margin:0}h2{font-size:18px;margin:0 0 12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.warn{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:500;margin-bottom:16px}
+.err{background:#FDE8E6;color:#8F1D14;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:500;margin-bottom:12px}
+@media (prefers-color-scheme:dark){.err{background:#3A1D1B;color:#FFB4AB}}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit}
+button{font:inherit;cursor:pointer}
+.btn{min-height:46px;padding:0 18px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;margin-top:14px}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.small{min-height:36px;padding:0 12px;margin:0;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi small{color:var(--muted);display:block;font-size:12px}.kpi b{font-size:20px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}.row small{color:var(--muted);display:block}
+.in{color:var(--good);font-weight:600;white-space:nowrap}.out{color:var(--bad);font-weight:600;white-space:nowrap}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 4px}
+nav button{flex:1;min-height:52px;background:none;border:0;color:var(--muted);font-weight:600;font-size:13px}
+nav button.on{color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);padding:8px 12px;font-weight:600;min-height:40px}
+.seg button.on{background:var(--accent);color:#fff}
+.muted{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<nav id="nav" hidden></nav>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var TXT = {
+    hi: {
+      app: 'MY MANAGER', testWarn: 'जाँच का चरण: जब तक सुरक्षा की जाँच पूरी न हो, असली पैसे या बैंक का डेटा न डालें।',
+      setupTitle: 'पहली बार सेटअप', setupHelp: 'Supabase के Project Settings → API में से Project URL और anon (publishable) कुंजी चिपकाएँ। service_role या secret कुंजी कभी न डालें।',
+      url: 'Project URL', key: 'anon / publishable कुंजी', save: 'सेव करें',
+      login: 'लॉगिन', email: 'ईमेल', password: 'पासवर्ड', signin: 'लॉगिन करें', signout: 'लॉग आउट', resetSetup: 'सेटअप बदलें',
+      home: 'होम', house: 'घर', biz: 'बिज़नेस',
+      monthIncome: 'इस माह की घरेलू आय', monthExpense: 'इस माह का घरेलू खर्च', monthSave: 'इस माह की बचत', bizCount: 'आपके बिज़नेस',
+      noHouse: 'घरेलू हिसाब देखने की अनुमति आपके पास नहीं है।',
+      addTxn: 'नई घरेलू एंट्री', kind: 'प्रकार', income: 'आय', expense: 'खर्च', amount: 'राशि (₹)', category: 'श्रेणी', member: 'सदस्य का नाम',
+      date: 'तारीख़', note: 'विवरण', add: 'जोड़ें', recent: 'हाल की एंट्री', del: 'हटाएँ', confirmDel: 'यह एंट्री हटानी है?',
+      addBiz: 'नया बिज़नेस (सिर्फ़ Owner)', name: 'बिज़नेस का नाम', type: 'बिज़नेस का प्रकार', myBiz: 'मेरे बिज़नेस', fy: 'वित्त वर्ष शुरू', gst: 'GST',
+      on: 'चालू', off: 'बंद', none: 'अभी कुछ नहीं है।', loading: 'लोड हो रहा है...',
+      badAmount: 'सही राशि डालें (0 से ज़्यादा)।', badName: 'नाम खाली नहीं हो सकता।', saved: 'सेव हो गया।',
+      months: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'], owner: 'Owner'
+    },
+    en: {
+      app: 'MY MANAGER', testWarn: 'Testing stage: do not enter real money or bank data until security testing is complete.',
+      setupTitle: 'First-time setup', setupHelp: 'From Supabase Project Settings → API, paste the Project URL and the anon (publishable) key. Never paste a service_role or secret key.',
+      url: 'Project URL', key: 'anon / publishable key', save: 'Save',
+      login: 'Login', email: 'Email', password: 'Password', signin: 'Sign in', signout: 'Sign out', resetSetup: 'Change setup',
+      home: 'Home', house: 'Household', biz: 'Businesses',
+      monthIncome: 'Household income this month', monthExpense: 'Household expense this month', monthSave: 'Savings this month', bizCount: 'Your businesses',
+      noHouse: 'You do not have permission to view household finances.',
+      addTxn: 'New household entry', kind: 'Type', income: 'Income', expense: 'Expense', amount: 'Amount (₹)', category: 'Category', member: 'Member name',
+      date: 'Date', note: 'Note', add: 'Add', recent: 'Recent entries', del: 'Delete', confirmDel: 'Delete this entry?',
+      addBiz: 'New business (Owner only)', name: 'Business name', type: 'Business type', myBiz: 'My businesses', fy: 'Financial year starts', gst: 'GST',
+      on: 'On', off: 'Off', none: 'Nothing yet.', loading: 'Loading...',
+      badAmount: 'Enter a valid amount (greater than 0).', badName: 'Name cannot be empty.', saved: 'Saved.',
+      months: ['January','February','March','April','May','June','July','August','September','October','November','December'], owner: 'Owner'
+    }
+  };
+
+  // सार्वजनिक Project URL और publishable कुंजी (secret नहीं; सुरक्षा डेटाबेस के RLS नियमों से आती है)
+  var DEFAULT_CFG = { url: 'https://tckfypveekcfrbpvbwci.supabase.co', key: 'sb_publishable_s_Bx8s2iIzXjnASVhbAdaw__b7gg7bi' };
+  var lang = 'hi', cfg = null, sb = null, session = null, profile = null, tab = 'home', msg = '', errMsg = '';
+  var cache = { tx: null, txDenied: false, biz: null, month: null };
+
+  function ls(k, v) {
+    try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
+    return null;
+  }
+  function t(k) { return TXT[lang][k]; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function rupees(paise) {
+    var v = paise / 100;
+    return '₹' + new Intl.NumberFormat('en-IN', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(v);
+  }
+  function dmy(iso) { var p = String(iso).split('-'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : iso; }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function monthStartIso() { return todayIso().slice(0, 8) + '01'; }
+  function $(id) { return document.getElementById(id); }
+
+  function langSwitch() {
+    return '<div class="seg" role="group" aria-label="Language"><button data-lang="hi" class="' + (lang === 'hi' ? 'on' : '') + '">हिंदी</button><button data-lang="en" class="' + (lang === 'en' ? 'on' : '') + '">English</button></div>';
+  }
+  function banners() {
+    var h = '<div class="warn">' + esc(t('testWarn')) + '</div>';
+    if (errMsg) h += '<div class="err" role="alert">' + esc(errMsg) + '</div>';
+    if (msg) h += '<div class="warn" role="status">' + esc(msg) + '</div>';
+    return h;
+  }
+
+  function renderSetup() {
+    $('nav').hidden = true;
+    $('app').innerHTML = '<div class="top"><h1>' + esc(t('app')) + '</h1>' + langSwitch() + '</div>' + banners() +
+      '<div class="card"><h2>' + esc(t('setupTitle')) + '</h2><p class="muted">' + esc(t('setupHelp')) + '</p>' +
+      '<label for="cfgUrl">' + esc(t('url')) + '</label><input id="cfgUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off">' +
+      '<label for="cfgKey">' + esc(t('key')) + '</label><input id="cfgKey" type="text" autocomplete="off">' +
+      '<button class="btn" id="cfgSave">' + esc(t('save')) + '</button></div>';
+    $('cfgSave').onclick = function () {
+      var u = $('cfgUrl').value.trim(), k = $('cfgKey').value.trim();
+      if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(u)) { errMsg = 'Project URL सही नहीं है / Invalid Project URL'; return renderSetup(); }
+      if (k.length < 20 || /service_role/i.test(k)) { errMsg = 'कुंजी सही नहीं है / Invalid key'; return renderSetup(); }
+      ls('mm_cfg', JSON.stringify({ url: u.replace(/\/$/, ''), key: k }));
+      errMsg = ''; boot();
+    };
+    bindLang();
+  }
+
+  function renderLogin() {
+    $('nav').hidden = true;
+    $('app').innerHTML = '<div class="top"><h1>' + esc(t('app')) + '</h1>' + langSwitch() + '</div>' + banners() +
+      '<form class="card" id="loginForm"><h2>' + esc(t('login')) + '</h2>' +
+      '<label for="em">' + esc(t('email')) + '</label><input id="em" type="email" autocomplete="username" required>' +
+      '<label for="pw">' + esc(t('password')) + '</label><input id="pw" type="password" autocomplete="current-password" required>' +
+      '<button class="btn" type="submit">' + esc(t('signin')) + '</button></form>' +
+      '';
+    $('loginForm').onsubmit = function (e) {
+      e.preventDefault();
+      sb.auth.signInWithPassword({ email: $('em').value.trim(), password: $('pw').value }).then(function (r) {
+        if (r.error) { errMsg = r.error.message; msg = ''; return renderLogin(); }
+        errMsg = ''; msg = ''; session = r.data.session; afterLogin();
+      });
+    };
+    bindLang();
+  }
+
+  function bindLang() {
+    var b = document.querySelectorAll('[data-lang]');
+    for (var i = 0; i < b.length; i++) b[i].onclick = function () {
+      lang = this.getAttribute('data-lang'); ls('mm_lang', lang); document.documentElement.lang = lang; render();
+    };
+  }
+
+  function afterLogin() {
+    cache = { tx: null, txDenied: false, biz: null, month: null };
+    sb.from('profiles').select('full_name,is_owner').eq('id', session.user.id).maybeSingle().then(function (r) {
+      profile = r.data || { is_owner: false };
+      tab = 'home'; render(); loadData();
+    });
+  }
+
+  function loadData() {
+    Promise.all([
+      sb.from('household_transactions').select('id,txn_date,kind,category,member_name,amount_paise,note').order('txn_date', { ascending: false }).order('created_at', { ascending: false }).limit(50),
+      sb.from('businesses').select('id,name,business_type,fy_start_month,gst_enabled').order('created_at', { ascending: true }),
+      sb.from('household_transactions').select('kind,amount_paise').gte('txn_date', monthStartIso())
+    ]).then(function (r) {
+      cache.tx = (r[0].data || []);
+      cache.txDenied = !!r[0].error || (r[0].data && r[0].data.length === 0 && false);
+      cache.biz = r[1].data || [];
+      var m = { income: 0, expense: 0 };
+      (r[2].data || []).forEach(function (x) { m[x.kind] += Number(x.amount_paise); });
+      cache.month = m;
+      if (r[0].error && r[0].error.code !== '42501') errMsg = r[0].error.message;
+      if (r[1].error) errMsg = r[1].error.message;
+      render();
+    });
+  }
+
+  function renderNav() {
+    var n = $('nav'); n.hidden = false;
+    n.innerHTML = ['home', 'house', 'biz'].map(function (k) {
+      return '<button data-tab="' + k + '" class="' + (tab === k ? 'on' : '') + '">' + esc(t(k)) + '</button>';
+    }).join('');
+    var b = n.querySelectorAll('button');
+    for (var i = 0; i < b.length; i++) b[i].onclick = function () { tab = this.getAttribute('data-tab'); msg = ''; errMsg = ''; render(); };
+  }
+
+  function header() {
+    var who = (profile && profile.full_name) ? profile.full_name : (session && session.user.email) || '';
+    return '<div class="top"><div><h1>' + esc(t('app')) + '</h1><span class="muted">' + esc(who) + (profile && profile.is_owner ? ' · ' + esc(t('owner')) : '') + '</span></div>' + langSwitch() + '</div>' + banners();
+  }
+
+  function viewHome() {
+    if (!cache.month) return '<p class="muted">' + esc(t('loading')) + '</p>';
+    var inc = cache.month.income, exp = cache.month.expense;
+    var nm = t('months')[new Date().getMonth()];
+    var h = '<div class="grid">' +
+      '<div class="kpi"><small>' + esc(t('monthIncome')) + ' (' + esc(nm) + ')</small><b>' + rupees(inc) + '</b></div>' +
+      '<div class="kpi"><small>' + esc(t('monthExpense')) + '</small><b>' + rupees(exp) + '</b></div>' +
+      '<div class="kpi"><small>' + esc(t('monthSave')) + '</small><b>' + rupees(inc - exp) + '</b></div>' +
+      '<div class="kpi"><small>' + esc(t('bizCount')) + '</small><b>' + (cache.biz ? cache.biz.length : 0) + '</b></div></div>';
+    return h;
+  }
+
+  function viewHouse() {
+    if (cache.tx === null) return '<p class="muted">' + esc(t('loading')) + '</p>';
+    var h = '<form class="card" id="txForm"><h2>' + esc(t('addTxn')) + '</h2>' +
+      '<label for="tk">' + esc(t('kind')) + '</label><select id="tk"><option value="expense">' + esc(t('expense')) + '</option><option value="income">' + esc(t('income')) + '</option></select>' +
+      '<label for="ta">' + esc(t('amount')) + '</label><input id="ta" inputmode="decimal" placeholder="0" required>' +
+      '<label for="tc">' + esc(t('category')) + '</label><input id="tc" maxlength="60">' +
+      '<label for="tm">' + esc(t('member')) + '</label><input id="tm" maxlength="60">' +
+      '<label for="td">' + esc(t('date')) + '</label><input id="td" type="date" value="' + todayIso() + '" required>' +
+      '<label for="tn">' + esc(t('note')) + '</label><input id="tn" maxlength="200">' +
+      '<button class="btn" type="submit">' + esc(t('add')) + '</button></form>';
+    h += '<div class="card"><h2>' + esc(t('recent')) + '</h2>';
+    if (!cache.tx.length) h += '<p class="muted">' + esc(t('none')) + '</p>';
+    cache.tx.forEach(function (x) {
+      var cls = x.kind === 'income' ? 'in' : 'out', sign = x.kind === 'income' ? '+' : '−';
+      h += '<div class="row"><div>' + esc(x.category || (x.kind === 'income' ? t('income') : t('expense'))) +
+        '<small>' + esc(dmy(x.txn_date)) + (x.member_name ? ' · ' + esc(x.member_name) : '') + (x.note ? ' · ' + esc(x.note) : '') + '</small>' +
+        (profile && profile.is_owner ? '<button class="btn alt small" data-del="' + esc(x.id) + '" style="margin-top:6px">' + esc(t('del')) + '</button>' : '') +
+        '</div><span class="' + cls + '">' + sign + rupees(Number(x.amount_paise)) + '</span></div>';
+    });
+    return h + '</div>';
+  }
+
+  function viewBiz() {
+    if (cache.biz === null) return '<p class="muted">' + esc(t('loading')) + '</p>';
+    var h = '';
+    if (profile && profile.is_owner) {
+      h += '<form class="card" id="bizForm"><h2>' + esc(t('addBiz')) + '</h2>' +
+        '<label for="bn">' + esc(t('name')) + '</label><input id="bn" maxlength="80" required>' +
+        '<label for="bt">' + esc(t('type')) + '</label><input id="bt" maxlength="60">' +
+        '<button class="btn" type="submit">' + esc(t('add')) + '</button></form>';
+    }
+    h += '<div class="card"><h2>' + esc(t('myBiz')) + '</h2>';
+    if (!cache.biz.length) h += '<p class="muted">' + esc(t('none')) + '</p>';
+    cache.biz.forEach(function (b) {
+      h += '<div class="row"><div><b>' + esc(b.name) + '</b><small>' + esc(b.business_type || '') + '</small></div>' +
+        '<span class="muted" style="text-align:right">' + esc(t('fy')) + ': ' + esc(t('months')[b.fy_start_month - 1]) + '<br>' + esc(t('gst')) + ': ' + esc(b.gst_enabled ? t('on') : t('off')) + '</span></div>';
+    });
+    return h + '</div>';
+  }
+
+  function render() {
+    if (!cfg) return renderSetup();
+    if (!session) return renderLogin();
+    var body = tab === 'home' ? viewHome() : tab === 'house' ? viewHouse() : viewBiz();
+    $('app').innerHTML = header() + body +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn alt small" id="out">' + esc(t('signout')) + '</button></div>';
+    renderNav(); bindLang();
+    $('out').onclick = function () { sb.auth.signOut().then(function () { session = null; profile = null; msg = ''; errMsg = ''; render(); }); };
+
+    var f = $('txForm');
+    if (f) f.onsubmit = function (e) {
+      e.preventDefault();
+      var amt = parseFloat(String($('ta').value).replace(/,/g, ''));
+      if (!isFinite(amt) || amt <= 0) { errMsg = t('badAmount'); msg = ''; return render(); }
+      var row = {
+        kind: $('tk').value, amount_paise: Math.round(amt * 100), category: $('tc').value.trim() || null,
+        member_name: $('tm').value.trim() || null, txn_date: $('td').value, note: $('tn').value.trim() || null
+      };
+      sb.from('household_transactions').insert(row).then(function (r) {
+        if (r.error) { errMsg = r.error.message; msg = ''; return render(); }
+        errMsg = ''; msg = t('saved'); loadData();
+      });
+    };
+    var bf = $('bizForm');
+    if (bf) bf.onsubmit = function (e) {
+      e.preventDefault();
+      var name = $('bn').value.trim();
+      if (!name) { errMsg = t('badName'); msg = ''; return render(); }
+      sb.from('businesses').insert({ name: name, business_type: $('bt').value.trim() || null }).then(function (r) {
+        if (r.error) { errMsg = r.error.message; msg = ''; return render(); }
+        errMsg = ''; msg = t('saved'); loadData();
+      });
+    };
+    var dels = document.querySelectorAll('[data-del]');
+    for (var i = 0; i < dels.length; i++) dels[i].onclick = function () {
+      var id = this.getAttribute('data-del');
+      if (!confirm(t('confirmDel'))) return;
+      sb.from('household_transactions').delete().eq('id', id).then(function (r) {
+        if (r.error) { errMsg = r.error.message; return render(); }
+        errMsg = ''; msg = t('saved'); loadData();
+      });
+    };
+  }
+
+  function boot() {
+    var l = ls('mm_lang'); if (l === 'hi' || l === 'en') lang = l;
+    document.documentElement.lang = lang;
+    cfg = DEFAULT_CFG;
+    try { var saved = JSON.parse(ls('mm_cfg') || 'null'); if (saved && saved.url && saved.key) cfg = saved; } catch (e) {}
+    if (!cfg || !cfg.url || !cfg.key) { cfg = null; return renderSetup(); }
+    sb = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: true, autoRefreshToken: true } });
+    sb.auth.getSession().then(function (r) {
+      session = r.data && r.data.session;
+      if (session) afterLogin(); else renderLogin();
+    });
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
